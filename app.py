@@ -38,6 +38,12 @@ st.markdown("A safe and loving space for your thoughts and feelings. 😊")
 # Chat History Container
 chat_history = st.empty() 
 
+# Prompt Template (You can customize this!)
+prompt_template = """
+How are you feeling today, friend?  I'm here to listen without judgment.  
+{question}
+"""
+
 # Function to handle user input and display response
 def handle_user_input():
     input_area = st.empty()
