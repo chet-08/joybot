@@ -3,6 +3,7 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 import time
+import google.generativeai
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -13,6 +14,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-pro")
 chat = model.start_chat(history=[])
 
+
 def get_gemini_response(question, prompt_template):
     full_prompt = prompt_template.format(question=question)
     response = chat.send_message(full_prompt, stream=True)
@@ -21,130 +23,261 @@ def get_gemini_response(question, prompt_template):
         text_response += chunk.text
     return text_response
 
+
+# Function to handle button click and update session state
+def handle_click():
+    st.session_state.user_input = ""  # Clear the input field in session state
+
+
 # Streamlit app setup
 st.set_page_config(
     page_title="Joy - Your AI Therapist",
-    page_icon="💖", # Change to a heart icon
+    page_icon="💖",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 # App Title
-st.title("Joy - Your AI Therapist 💖") # Change to a heart icon
+st.title("Joy - Your AI Therapist 💖")
+st.markdown(
+    """
+    <style>
+        .stTitle {
+            color: white; 
+            font-weight: bold; 
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); 
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Disclaimer
-st.markdown("A safe and loving space for your thoughts and feelings. 😊")
+st.markdown(
+    """
+    <div class="disclaimer">A safe and loving space for your thoughts and feelings. 😊</div>
+    <style>
+        .disclaimer {
+            text-align: top left;
+            font-size: 1.8em;
+            color: white; 
+            margin-bottom: 20px;
+            animation: fade-in 2s ease; 
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# --- Sign Up/Login Buttons (Top Right) ---
+st.markdown(
+    """
+    <div class="auth-buttons">
+        <button class="animated-button">Sign Up</button>
+        <button class="animated-button">Login</button>
+    </div>
+    <style>
+        .auth-buttons {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 101; 
+        }
+
+        /* Cerise color for Sign Up/Login buttons */
+        .auth-buttons .animated-button {
+            background-color: #DE3163; 
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# --- Sidebar with Animated Buttons ---
+st.sidebar.markdown(
+    """
+    <div class="sidebar-buttons">
+        <button class="animated-button">Mood Journal</button><br>
+        <button class="animated-button">Mood Boosters</button><br>
+        <button class="animated-button">Positive Activities</button><br>
+        <button class="animated-button">Use Your Trigger Plan</button><br>
+        <button class="animated-button">Goal Trainer</button>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Chat History Container
-chat_history = st.empty() 
+chat_history = st.container()
 
-# Prompt Template (You can customize this!)
+# Improved Prompt Template
 prompt_template = """
-How are you feeling today, friend?  I'm here to listen without judgment.  
+You are Joy, a friendly and supportive AI therapist. Your goal is to make users feel heard, understood, and empowered. 
+
+Remember to:
+
+* **Acknowledge and Validate:** Let the user know you understand and their feelings are valid.
+* **Personalize:**  Use details from previous conversations to make responses feel personal.
+* **Reduce Cognitive Load:** Keep your responses simple, direct, and not overwhelming.
+* **Encourage Self-Care:** Suggest self-care activities that could help.
+* **Be Calming and Supportive:** Create a relaxing and safe space with your tone. 
+* **Offer Resources:** Provide helpful resources or exercises when appropriate.
+
+Here's the user's current message:
+
 {question}
 """
 
-# Function to handle user input and display response
-def handle_user_input():
-    input_area = st.empty()
-    input = input_area.text_input("Enter your question:", key="input", placeholder="Type your question here...")
-    submit = st.button("Ask", use_container_width=True)
+# Input Area
+with st.container():
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    if submit and input:
+    # Use session state to store and manage user input
+    if "user_input" not in st.session_state:
+        st.session_state.user_input = ""
+
+    user_input = st.text_input(
+        "Enter your question:",
+        key="user_input",
+        value=st.session_state.user_input,
+        placeholder="Type your question here...",
+    )
+
+    # Centered "Ask" button
+    st.markdown(
+        '<div style="display: flex; justify-content: center;"></div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("Ask", on_click=handle_click):
         with st.spinner("Joy is listening..."):
-            time.sleep(1)  # Simulate typing time
-            response = get_gemini_response(input, prompt_template)
             time.sleep(1)  # Simulate thinking time
+            response = get_gemini_response(user_input, prompt_template)
+            time.sleep(1)
 
         # Add user query and response to chat history
-        chat_history.markdown(f"**You:** {input}")
+        chat_history.markdown(f"**You:** {user_input}")
         chat_history.markdown(f"**Joy:** {response}")
 
-        # Clear the input field
-        input_area.text_input("Enter your question:", key="input_clear", value="") 
+# --- Breathing Circle Animation (Bottom Left) ---
+st.markdown(
+    """
+    <div class="breathing-circle">
+        <div class="breathing-circle-text">
+            3 Mins <br>
+            Meditation
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-# Call the input handling function
-handle_user_input() 
+# --- Talk to a Professional Button (Bottom Right) ---
+st.markdown(
+    """
+    <div class="talk-button">
+        <button class="animated-button">Talk to a Professional</button>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-# Custom CSS for a ChatGPT-like interface with a professional dark theme
+# Custom CSS 
 st.markdown(
     """
     <style>
         .stApp {
-            background: linear-gradient(to bottom, #333399, #2962FF); /* Darker purple to dark blue gradient */
-            color: #eee;       /* Light text */
-            font-family: 'Arial', sans-serif; /* Clean, easy-to-read font */
-            overflow-x: hidden; /* Hide horizontal scrollbar */
-            margin: 0; /* Remove default margins */
-            padding: 0; /* Remove default padding */
+            background-image: url("https://wallpaperaccess.com/full/1761719.jpg");  
+            background-size: cover;
+            font-family: 'Candara', candara ;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            color: white; 
         }
 
-        .stTitle {
-            color: #eee;       /* Light text */
+        /* ... (Other CSS styles) ... */
+
+        /* Breathing Circle Animation */
+        .breathing-circle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%;
+            background-color: #DE3163; 
+            animation: breathe 4s ease-in-out infinite; 
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+        }
+
+        @keyframes breathe {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.7; 
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;    
+            }
+            100% {
+                transform: scale(0.9);
+                opacity: 0.7; 
+            }
+        }
+
+        .breathing-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            color: black;
             text-align: center;
-            font-size: 2.8em; /* Larger font size for the title */
-            margin-bottom: 30px; /* Add more space below the title */
-            font-weight: bold; /* Bold title */
-            font-family: 'Pacifico', cursive;  /* A more friendly font for the title */
         }
 
-        .chat-history {
-            max-height: 400px;  /* Set the maximum height */
-            overflow-y: auto;  /* Enable vertical scrolling */
-            padding: 15px;
-            border: 1px solid #444; /* Darker border */
-            border-radius: 10px;
-            margin-bottom: 20px;
-            background-color: #333; /* Darker background for chat history */
-            font-size: 1.3em; /* Slightly larger font size for readability */
-            font-weight: 400; /* Slightly bolder font weight */
-            line-height: 1.5; /* Adjust line height for better readability */
+        /* Talk to a Professional Button */
+        .talk-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 101;
         }
 
-        .chat-history .you {
-            text-align: right;
-            color: #fff; /* White for user messages */
-            font-weight: bold;
-            margin-bottom: 10px;
+        /* Sidebar Button Styling */
+        .sidebar-buttons {
+            margin-top: 50px; 
         }
 
-        .chat-history .bot {
-            text-align: left;
-            color: #eee;    /* Light text for bot messages */
-            margin-bottom: 10px;
-        }
-
-        .stTextInput {
-            background-color: #333; /* Darker blue input field */
-            color: #eee;       /* Light text in input */
-            border: 1px solid #444; /* Darker border */
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 1.1em; /* Slightly larger font size for readability */
-            margin-bottom: 15px; /* Add spacing below the input field */
-        }
-
-        .stButton {
-            background-color: #0069d9; /* Darker blue on hover */
-            color: #fff;       /* White text on button */
+        /* All Animated Buttons -  #DE3163 (Cerise) Color */
+        .animated-button {
+            background-color: #DE3163; 
+            color: white;
             border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
+            border-radius: 20px;
+            padding: 10px 20px;
             cursor: pointer;
-            width: 100%; /* Make the button fill the container width */
+            width: 100%; 
             text-align: center;
-            border: none;
-            box-shadow: none; /* Remove default button shadow */
-            outline: none;
-            font-weight: bold;
-            font-size: 1.2em; /* Slightly larger font size for readability */
-            transition: background-color 0.2s ease; /* Add a smooth transition for hover effect */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 1em;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
 
-        .stButton:hover {
-            background-color: #0056b3; /* Darker blue on hover */
+        .animated-button:hover {
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 8px rgba(0, 0, 0, 0.15);
         }
+
+        /* ... (Other CSS styles) ... */
+
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
